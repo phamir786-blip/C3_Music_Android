@@ -73,6 +73,7 @@ class StreamingService : Service() {
 
     private var statsJob: Job? = null
     private var reconnectJob: Job? = null
+    private var captureRecoveryJob: Job? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     private var sessionStartTime = 0L
@@ -192,6 +193,10 @@ class StreamingService : Service() {
         val action = intent?.action ?: ACTION_START
         when (action) {
             ACTION_START -> {
+                if (isStreaming || _telemetry.value.streamingState == StreamingState.CONNECTING || _telemetry.value.streamingState == StreamingState.RECONNECTING) {
+                    Log.i(TAG, "Ignoring duplicate START request while streaming is already active")
+                    return START_STICKY
+                }
                 val code = intent?.getIntExtra("result_code", 0) ?: 0
                 val data = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent?.getParcelableExtra("intent_data", Intent::class.java)
@@ -212,7 +217,7 @@ class StreamingService : Service() {
                 reconnect()
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     private fun startForegroundWithNotification() {
@@ -430,6 +435,41 @@ class StreamingService : Service() {
             captureStatus = status,
             lastError = error ?: current.lastError
         )
+
+        // Recover AudioRecord failures without tearing down the foreground service
+        // or the active network transport.
+        if (status == CaptureStatus.ERROR && isStreaming && !isStopping.get()) {
+            if (captureRecoveryJob?.isActive != true) {
+                captureRecoveryJob = serviceScope.launch(Dispatchers.IO) {
+                    repeat(5) { attempt ->
+                        if (isStopping.get()) return@launch
+                        delay(if (attempt == 0) 100L else 500L)
+                        val prefs = AppContainer.getPreferences(this@StreamingService).userPreferences.value
+                        Log.w(TAG, "Recovering audio capture (attempt ${attempt + 1}/5)")
+                        val restarted = captureManager?.startCapture(
+                            format = prefs.audioFormat,
+                            sourceType = prefs.audioSource,
+                            latencyPreset = prefs.bufferPreset,
+                            mediaProjection = mediaProjection
+                        ) ?: false
+                        if (restarted) {
+                            _telemetry.value = _telemetry.value.copy(
+                                captureStatus = CaptureStatus.CAPTURING,
+                                lastError = null
+                            )
+                            Log.i(TAG, "Audio capture recovered without restarting stream transport")
+                            return@launch
+                        }
+                    }
+                    if (!isStopping.get()) {
+                        _telemetry.value = _telemetry.value.copy(
+                            captureStatus = CaptureStatus.ERROR,
+                            lastError = "Audio capture recovery failed"
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun triggerAutoReconnect(prefs: UserPreferences, instant: Boolean = false) {
@@ -631,6 +671,7 @@ class StreamingService : Service() {
         restorePhoneSpeaker()
         statsJob?.cancel()
         reconnectJob?.cancel()
+        captureRecoveryJob?.cancel()
 
         pacedTransmitter?.stop()
         tcpServer?.stopServer()
