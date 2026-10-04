@@ -17,59 +17,43 @@ class TcpStreamClient(
     private val onBytesTransmitted: (Long) -> Unit
 ) {
     private val TAG = "TcpStreamClient"
-
     private var socket: Socket? = null
     private var outputStream: OutputStream? = null
     private val isConnected = AtomicBoolean(false)
     private val isManuallyStopped = AtomicBoolean(false)
-
     val totalBytesWritten = AtomicLong(0L)
 
     @Synchronized
-    fun connectAndStart(
-        host: String,
-        port: Int,
-        timeoutMs: Int,
-        format: AudioStreamFormat,
-        headerMode: HeaderMode
-    ): Boolean {
+    fun connectAndStart(host: String, port: Int, timeoutMs: Int, format: AudioStreamFormat, headerMode: HeaderMode): Boolean {
         isManuallyStopped.set(false)
         onStateChanged(StreamingState.CONNECTING, null)
-
         return try {
-            Log.i(TAG, "Connecting TCP socket to $host:$port (Timeout: ${timeoutMs}ms)")
-            val newSocket = Socket()
-            // Low latency and high priority socket flags
-            newSocket.tcpNoDelay = true
-            newSocket.keepAlive = true
-            try {
-                // IPTOS_LOWDELAY = 0x10 (DSCP EF / Interactive)
-                newSocket.trafficClass = 0x10
-            } catch (_: Exception) {}
-            newSocket.sendBufferSize = 32 * 1024
-            newSocket.soTimeout = 10000
-
+            Log.i(TAG, "Connecting TCP socket to \$host:\$port (Timeout: \${timeoutMs}ms)")
+            val newSocket = Socket().apply {
+                tcpNoDelay = true
+                keepAlive = true
+                try { trafficClass = 0x10 } catch (_: Exception) {}
+                sendBufferSize = 32 * 1024
+                soTimeout = 10000
+            }
             newSocket.connect(InetSocketAddress(host, port), timeoutMs)
             val os = BufferedOutputStream(newSocket.getOutputStream(), 16 * 1024)
-
-            // Transmit format header if applicable
             val header = C3Protocol.getInitialHeader(format, headerMode)
             if (header != null && header.isNotEmpty()) {
-                Log.i(TAG, "Sending ${header.size}-byte format header to receiver")
                 os.write(header)
                 os.flush()
                 totalBytesWritten.addAndGet(header.size.toLong())
                 onBytesTransmitted(totalBytesWritten.get())
             }
-
+            closeSocket()
             socket = newSocket
             outputStream = os
             isConnected.set(true)
             onStateChanged(StreamingState.STREAMING, null)
-            Log.i(TAG, "TCP connected and streaming smoothly to $host:$port")
+            Log.i(TAG, "TCP connected and streaming smoothly to \$host:\$port")
             true
         } catch (e: Exception) {
-            val errMsg = "Connection failed to $host:$port: ${e.message}"
+            val errMsg = "Connection failed to \$host:\$port: \${e.message}"
             Log.e(TAG, errMsg)
             closeSocket()
             onStateChanged(StreamingState.ERROR, errMsg)
@@ -77,12 +61,9 @@ class TcpStreamClient(
         }
     }
 
-    /**
-     * Sends an audio chunk. Called by the streaming transmitter.
-     */
+    @Synchronized
     fun sendAudioChunk(buffer: ByteArray, offset: Int, length: Int): Boolean {
         if (!isConnected.get() || isManuallyStopped.get()) return false
-
         return try {
             val os = outputStream ?: return false
             os.write(buffer, offset, length)
@@ -92,7 +73,7 @@ class TcpStreamClient(
             true
         } catch (e: IOException) {
             if (!isManuallyStopped.get()) {
-                val errMsg = "TCP network transmission error: ${e.message}"
+                val errMsg = "TCP network transmission error: \${e.message}"
                 Log.w(TAG, errMsg)
                 closeSocket()
                 onStateChanged(StreamingState.DISCONNECTED, errMsg)
@@ -105,22 +86,14 @@ class TcpStreamClient(
     fun disconnect(isManual: Boolean = true) {
         isManuallyStopped.set(isManual)
         closeSocket()
-        if (isManual) {
-            onStateChanged(StreamingState.IDLE, null)
-        }
+        if (isManual) onStateChanged(StreamingState.IDLE, null)
     }
 
     private fun closeSocket() {
         isConnected.set(false)
-        try {
-            outputStream?.flush()
-        } catch (_: Exception) {}
-        try {
-            outputStream?.close()
-        } catch (_: Exception) {}
-        try {
-            socket?.close()
-        } catch (_: Exception) {}
+        try { outputStream?.flush() } catch (_: Exception) {}
+        try { outputStream?.close() } catch (_: Exception) {}
+        try { socket?.close() } catch (_: Exception) {}
         outputStream = null
         socket = null
     }
