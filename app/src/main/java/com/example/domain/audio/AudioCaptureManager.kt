@@ -264,6 +264,10 @@ class AudioCaptureManager(
                 } catch (_: InterruptedException) {
                     break
                 }
+            } else if (bytesRead == AudioRecord.ERROR_DEAD_OBJECT) {
+                Log.w(TAG, "AudioRecord ERROR_DEAD_OBJECT (audio service/device route interrupted)")
+                onCaptureStatusChanged(CaptureStatus.ERROR, "AudioRecord became unavailable")
+                break
             } else if (bytesRead == AudioRecord.ERROR_BAD_VALUE) {
                 Log.e(TAG, "AudioRecord ERROR_BAD_VALUE")
                 onCaptureStatusChanged(CaptureStatus.ERROR, "AudioRecord bad parameters")
