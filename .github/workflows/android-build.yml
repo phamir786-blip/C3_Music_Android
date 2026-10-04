@@ -25,6 +25,9 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
+      - name: Provide CI .env
+        run: touch .env
+
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
