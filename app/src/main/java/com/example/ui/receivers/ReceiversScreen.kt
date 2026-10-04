@@ -308,7 +308,7 @@ fun ReceiversScreen(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Test Ping")
+                            Icon(Icons.Default.Refresh, contentDescription = "Test connection", modifier = Modifier.size(20.dp))
                         }
 
                         OutlinedButton(
@@ -327,9 +327,7 @@ fun ReceiversScreen(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Save")
+                            Icon(Icons.Default.Add, contentDescription = "Save receiver", modifier = Modifier.size(20.dp))
                         }
 
                         Button(
@@ -343,7 +341,7 @@ fun ReceiversScreen(
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("Use Now", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.Check, contentDescription = "Use receiver now", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
                         }
                     }
                 }
@@ -432,7 +430,7 @@ fun DiscoveredReceiverCard(
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Select", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.Check, contentDescription = "Select receiver", tint = Color.Black, modifier = Modifier.size(20.dp))
             }
         }
     }
@@ -501,7 +499,7 @@ fun SavedReceiverCard(
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Connect", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.Router, contentDescription = "Connect receiver", tint = Color.Black, modifier = Modifier.size(20.dp))
                 }
             }
         }

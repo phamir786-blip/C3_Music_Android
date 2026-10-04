@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MusicNote
@@ -234,19 +235,19 @@ fun HomeScreen(
                                     Toast.makeText(context, "Phone IP copied: $localIp", Toast.LENGTH_SHORT).show()
                                 }
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy phone IP",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = "Phone IP: $localIp",
+                                text = localIp,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 10.sp,
                                 color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "(Copy)",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontSize = 9.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -512,20 +513,7 @@ fun HomeScreen(
                             tint = if (prefs.mutePhoneWhileStreaming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
-                        Column {
-                            Text(
-                                text = "Silence Phone Speaker",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = if (prefs.mutePhoneWhileStreaming) "Phone will stay silent while streaming" else "Phone speaker plays along with receiver",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+
                     }
                     Switch(
                         checked = prefs.mutePhoneWhileStreaming,
@@ -550,9 +538,7 @@ fun HomeScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = ErrorCoral),
                             shape = RoundedCornerShape(14.dp)
                         ) {
-                            Icon(Icons.Default.Stop, contentDescription = "Stop", tint = Color.Black)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Stop Streaming", fontWeight = FontWeight.Bold, color = Color.Black)
+                            Icon(Icons.Default.Stop, contentDescription = "Stop streaming", tint = Color.Black)
                         }
 
                         IconButton(
@@ -600,9 +586,7 @@ fun HomeScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(14.dp)
                         ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Start", tint = MaterialTheme.colorScheme.onPrimary)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Start Streaming", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                            Icon(Icons.Default.PlayArrow, contentDescription = "Start streaming", tint = MaterialTheme.colorScheme.onPrimary)
                         }
                     }
                 }
@@ -899,7 +883,6 @@ fun HomeScreen(
                 TelemetryTile(
                     icon = Icons.Default.Speed,
                     value = if (isStreaming) "${telemetry.currentBitrateKbps} kbps" else "0 kbps",
-                    title = "Bitrate",
                     modifier = Modifier.width(156.dp)
                 )
             }
@@ -907,7 +890,6 @@ fun HomeScreen(
                 TelemetryTile(
                     icon = Icons.Default.CloudUpload,
                     value = telemetry.formattedDataTransmitted,
-                    title = "Data",
                     modifier = Modifier.width(156.dp)
                 )
             }
@@ -915,7 +897,6 @@ fun HomeScreen(
                 TelemetryTile(
                     icon = Icons.Default.Timer,
                     value = telemetry.formattedDuration,
-                    title = "Duration",
                     modifier = Modifier.width(156.dp)
                 )
             }
@@ -930,7 +911,6 @@ fun HomeScreen(
                         CaptureStatus.ERROR -> "Error"
                         CaptureStatus.IDLE -> "Standby"
                     },
-                    title = "Capture",
                     modifier = Modifier.width(156.dp),
                     iconTint = if (telemetry.captureStatus == CaptureStatus.CAPTURING) StreamEmerald else MaterialTheme.colorScheme.primary
                 )
@@ -1028,7 +1008,6 @@ fun HomeScreen(
 fun TelemetryTile(
     icon: ImageVector,
     value: String,
-    title: String = "",
     modifier: Modifier = Modifier,
     iconTint: Color = MaterialTheme.colorScheme.primary,
     valueColor: Color = MaterialTheme.colorScheme.onSurface
@@ -1053,14 +1032,6 @@ fun TelemetryTile(
                     tint = iconTint,
                     modifier = Modifier.size(18.dp)
                 )
-                if (title.isNotEmpty()) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
             Text(
                 text = value,
