@@ -913,12 +913,10 @@ fun HomeScreen(
         }
 
         if (telemetry.reconnectCount > 0) {
-            TelemetryTile(
+            TelemetryMetric(
                 icon = Icons.Default.Refresh,
                 value = "${telemetry.reconnectCount} retries",
-                modifier = Modifier.fillMaxWidth(),
-                iconTint = WarningAmber,
-                valueColor = WarningAmber
+                iconTint = WarningAmber
             )
         }
 
@@ -1007,8 +1005,7 @@ fun TelemetryMetric(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.weight(1f)
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
             imageVector = icon,
