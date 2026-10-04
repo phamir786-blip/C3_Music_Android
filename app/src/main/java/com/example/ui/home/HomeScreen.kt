@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -185,19 +186,19 @@ fun HomeScreen(
                 .testTag("receiver_status_card"),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(18.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(32.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
@@ -206,10 +207,10 @@ fun HomeScreen(
                             imageVector = Icons.Default.Router,
                             contentDescription = "Receiver",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(9.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         val titleText = when (prefs.protocolMode) {
                             ProtocolMode.RAW_TCP_SERVER -> "Phone TCP Server :${prefs.targetPort}"
@@ -218,8 +219,8 @@ fun HomeScreen(
                         }
                         Text(
                             text = titleText,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Row(
@@ -237,14 +238,14 @@ fun HomeScreen(
                                 text = "Phone IP: $localIp",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "(Copy)",
                                 style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
+                                fontSize = 9.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -272,19 +273,19 @@ fun HomeScreen(
                 .testTag("transmission_center_card"),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            shape = RoundedCornerShape(20.dp)
+            shape = RoundedCornerShape(18.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Animated Glowing Visualizer Disc
                 Box(
                     modifier = Modifier
-                        .size(110.dp)
+                        .size(82.dp)
                         .scale(pulseScale)
                         .clip(CircleShape)
                         .background(statusColor.copy(alpha = if (isStreaming) 0.18f else 0.08f)),
@@ -292,7 +293,7 @@ fun HomeScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(80.dp)
+                            .size(60.dp)
                             .clip(CircleShape)
                             .background(statusColor.copy(alpha = if (isStreaming) 0.35f else 0.15f)),
                         contentAlignment = Alignment.Center
@@ -301,7 +302,7 @@ fun HomeScreen(
                             imageVector = if (isStreaming) Icons.Default.GraphicEq else Icons.Default.Router,
                             contentDescription = "Audio Stream Visualizer",
                             tint = statusColor,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                 }
@@ -613,9 +614,9 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(18.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -887,45 +888,53 @@ fun HomeScreen(
             }
         }
 
-        // Live Real-Time Telemetry Grid
-        Row(
-            modifier = Modifier.fillMaxWidth(),
+        // Live Real-Time Telemetry Tiles — swipe horizontally like the C3 web card strip.
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("telemetry_swipe_row"),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            TelemetryTile(
-                icon = Icons.Default.Speed,
-                value = if (isStreaming) "${telemetry.currentBitrateKbps} kbps" else "0 kbps",
-                modifier = Modifier.weight(1f)
-            )
-            TelemetryTile(
-                icon = Icons.Default.CloudUpload,
-                value = telemetry.formattedDataTransmitted,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            TelemetryTile(
-                icon = Icons.Default.Timer,
-                value = telemetry.formattedDuration,
-                modifier = Modifier.weight(1f)
-            )
-            TelemetryTile(
-                icon = Icons.Default.GraphicEq,
-                value = when (telemetry.captureStatus) {
-                    CaptureStatus.CAPTURING -> "PCM"
-                    CaptureStatus.SILENCE -> "Silence"
-                    CaptureStatus.INITIALIZING -> "Init"
-                    CaptureStatus.PAUSED -> "Paused"
-                    CaptureStatus.ERROR -> "Error"
-                    CaptureStatus.IDLE -> "Standby"
-                },
-                modifier = Modifier.weight(1f),
-                iconTint = if (telemetry.captureStatus == CaptureStatus.CAPTURING) StreamEmerald else MaterialTheme.colorScheme.primary
-            )
+            item {
+                TelemetryTile(
+                    icon = Icons.Default.Speed,
+                    value = if (isStreaming) "${telemetry.currentBitrateKbps} kbps" else "0 kbps",
+                    title = "Bitrate",
+                    modifier = Modifier.width(156.dp)
+                )
+            }
+            item {
+                TelemetryTile(
+                    icon = Icons.Default.CloudUpload,
+                    value = telemetry.formattedDataTransmitted,
+                    title = "Data",
+                    modifier = Modifier.width(156.dp)
+                )
+            }
+            item {
+                TelemetryTile(
+                    icon = Icons.Default.Timer,
+                    value = telemetry.formattedDuration,
+                    title = "Duration",
+                    modifier = Modifier.width(156.dp)
+                )
+            }
+            item {
+                TelemetryTile(
+                    icon = Icons.Default.GraphicEq,
+                    value = when (telemetry.captureStatus) {
+                        CaptureStatus.CAPTURING -> "PCM"
+                        CaptureStatus.SILENCE -> "Silence"
+                        CaptureStatus.INITIALIZING -> "Init"
+                        CaptureStatus.PAUSED -> "Paused"
+                        CaptureStatus.ERROR -> "Error"
+                        CaptureStatus.IDLE -> "Standby"
+                    },
+                    title = "Capture",
+                    modifier = Modifier.width(156.dp),
+                    iconTint = if (telemetry.captureStatus == CaptureStatus.CAPTURING) StreamEmerald else MaterialTheme.colorScheme.primary
+                )
+            }
         }
 
         if (telemetry.reconnectCount > 0) {
@@ -946,10 +955,10 @@ fun HomeScreen(
                     .testTag("streaming_connected_banner"),
                 colors = CardDefaults.cardColors(containerColor = StreamEmerald.copy(alpha = 0.12f)),
                 border = BorderStroke(1.dp, StreamEmerald.copy(alpha = 0.45f)),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(18.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.padding(11.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.Check, contentDescription = "Connected", tint = StreamEmerald)
@@ -1019,6 +1028,7 @@ fun HomeScreen(
 fun TelemetryTile(
     icon: ImageVector,
     value: String,
+    title: String = "",
     modifier: Modifier = Modifier,
     iconTint: Color = MaterialTheme.colorScheme.primary,
     valueColor: Color = MaterialTheme.colorScheme.onSurface
@@ -1027,19 +1037,31 @@ fun TelemetryTile(
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        shape = RoundedCornerShape(14.dp)
+        shape = RoundedCornerShape(18.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        Column(
+            modifier = Modifier.padding(13.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconTint,
-                modifier = Modifier.size(20.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(18.dp)
+                )
+                if (title.isNotEmpty()) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleSmall,
