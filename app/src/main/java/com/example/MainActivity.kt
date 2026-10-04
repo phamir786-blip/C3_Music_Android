@@ -91,7 +91,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainAppContent(
     homeViewModel: HomeViewModel,
-    receiversViewModel: ReceiversViewModel,
     settingsViewModel: SettingsViewModel
 ) {
     val navController = rememberNavController()
