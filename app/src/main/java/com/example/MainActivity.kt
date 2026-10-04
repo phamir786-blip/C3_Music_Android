@@ -34,8 +34,8 @@ import androidx.core.content.ContextCompat
 import com.example.ui.home.HomeScreen
 import com.example.ui.home.HomeViewModel
 import com.example.ui.navigation.Screen
-import com.example.ui.receivers.ReceiversScreen
-import com.example.ui.receivers.ReceiversViewModel
+import com.example.ui.devices.C3WebScreen
+import com.example.ui.devices.DevicesScreen
 import com.example.ui.settings.SettingsScreen
 import com.example.ui.settings.SettingsViewModel
 import com.example.ui.theme.C3StreamerTheme
@@ -43,7 +43,6 @@ import com.example.ui.theme.C3StreamerTheme
 class MainActivity : ComponentActivity() {
 
     private val homeViewModel: HomeViewModel by viewModels()
-    private val receiversViewModel: ReceiversViewModel by viewModels()
     private val settingsViewModel: SettingsViewModel by viewModels()
 
     private val startupPermissionLauncher = registerForActivityResult(
@@ -77,7 +76,6 @@ class MainActivity : ComponentActivity() {
             C3StreamerTheme(darkTheme = userPrefs.amoledDarkTheme) {
                 MainAppContent(
                     homeViewModel = homeViewModel,
-                    receiversViewModel = receiversViewModel,
                     settingsViewModel = settingsViewModel
                 )
             }
@@ -104,7 +102,7 @@ fun MainAppContent(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            NavigationBar(
+            if (currentRoute != Screen.C3Web.route) NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.testTag("bottom_nav_bar")
             ) {
@@ -156,14 +154,17 @@ fun MainAppContent(
                 )
             }
             composable(Screen.Receivers.route) {
-                ReceiversScreen(
-                    viewModel = receiversViewModel,
-                    onReceiverSelected = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Home.route) { inclusive = false }
+                DevicesScreen(
+                    onOpenC3 = {
+                        navController.navigate(Screen.C3Web.route) {
                             launchSingleTop = true
                         }
                     }
+                )
+            }
+            composable(Screen.C3Web.route) {
+                C3WebScreen(
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable(Screen.Settings.route) {
