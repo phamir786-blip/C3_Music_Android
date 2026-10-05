@@ -42,7 +42,8 @@
         <service
             android:name=".service.StreamingService"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection|microphone" />
+            android:foregroundServiceType="mediaProjection|microphone"
+            android:stopWithTask="false" />
 
         <service
             android:name=".service.StreamingTileService"
