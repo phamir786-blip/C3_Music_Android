@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.outlined.StarOutline
 import com.example.data.network.NetworkUtils
+import com.example.data.network.C3Protocol
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -125,6 +126,17 @@ fun ReceiversScreen(
                     }
                 }
             }
+        }
+
+        // Hard-coded receiver targets for instant single-cast selection
+        item {
+            HardCodedReceiverTargets(
+                onSelect = { host, port ->
+                    viewModel.selectReceiver(host, port)
+                    Toast.makeText(context, "Selected $host:$port", Toast.LENGTH_SHORT).show()
+                    onReceiverSelected()
+                }
+            )
         }
 
         // Discovered Devices List
@@ -373,6 +385,48 @@ fun ReceiversScreen(
 
         item {
             Spacer(modifier = Modifier.height(20.dp))
+        }
+    }
+}
+
+@Composable
+private fun HardCodedReceiverTargets(
+    onSelect: (String, Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Instant Single-Cast Targets",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Button(
+                onClick = { onSelect("c3music.local", 50005) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("ESP32-C3  •  c3music.local:50005")
+            }
+            Button(
+                onClick = { onSelect(C3Protocol.S3_RECEIVER_HOSTNAME, C3Protocol.S3_RECEIVER_TCP_PORT) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("S3 N16R8  •  s3music.local:50005")
+            }
+            Text(
+                text = "TCP: 50005  •  HTTP: 8080  •  one active receiver at a time",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
