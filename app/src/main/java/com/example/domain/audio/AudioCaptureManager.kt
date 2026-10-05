@@ -266,10 +266,17 @@ class AudioCaptureManager(
                 }
             } else if (bytesRead == AudioRecord.ERROR_DEAD_OBJECT) {
                 Log.w(TAG, "AudioRecord ERROR_DEAD_OBJECT (audio service/device route interrupted)")
+                // End only this AudioRecord capture instance. Keep the streaming
+                // service, transport, transmitter, and ring buffer alive so the
+                // service can recreate AudioRecord without tearing down the stream.
+                isRunning.set(false)
+                releaseAudioRecord()
                 onCaptureStatusChanged(CaptureStatus.ERROR, "AudioRecord became unavailable")
                 break
             } else if (bytesRead == AudioRecord.ERROR_BAD_VALUE) {
                 Log.e(TAG, "AudioRecord ERROR_BAD_VALUE")
+                isRunning.set(false)
+                releaseAudioRecord()
                 onCaptureStatusChanged(CaptureStatus.ERROR, "AudioRecord bad parameters")
                 break
             } else {
