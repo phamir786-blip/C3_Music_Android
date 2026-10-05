@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -72,8 +71,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -104,6 +101,7 @@ import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.ErrorCoral
 import com.example.ui.theme.StreamEmerald
 import com.example.ui.theme.WarningAmber
+import com.example.ui.components.OnOffToggle
 
 @Composable
 fun HomeScreen(
@@ -319,86 +317,51 @@ fun HomeScreen(
                     Box(modifier = Modifier.wrapContentSize(Alignment.Center)) {
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(
-                                1.dp,
-                                if (formatDropdownExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-                            ),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, if (formatDropdownExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable(enabled = !isStreaming && !isConnecting) {
-                                    formatDropdownExpanded = true
-                                }
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable(enabled = !isStreaming && !isConnecting) { formatDropdownExpanded = true }
                                 .testTag("audio_format_dropdown_trigger")
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(9.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.MusicNote,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = "${prefs.audioFormat.displayName} • ${prefs.audioFormat.bitrateKbps} kbps",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                if (!isStreaming && !isConnecting) {
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = "Select Audio Format",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                Box(
+                                    modifier = Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.MusicNote, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(17.dp))
                                 }
+                                Column {
+                                    Text("Audio Quality", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("${prefs.audioFormat.displayName} • ${prefs.audioFormat.bitrateKbps} kbps", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                                }
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = "Select Audio Quality", tint = if (!isStreaming && !isConnecting) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
                             }
                         }
-
                         DropdownMenu(
                             expanded = formatDropdownExpanded,
                             onDismissRequest = { formatDropdownExpanded = false },
-                            modifier = Modifier
-                                .background(MaterialTheme.colorScheme.surface)
-                                .testTag("audio_format_dropdown_menu")
+                            modifier = Modifier.background(MaterialTheme.colorScheme.surface).testTag("audio_format_dropdown_menu")
                         ) {
                             supportedFormats.forEach { cap ->
                                 val isSelected = prefs.audioFormat == cap.format
                                 DropdownMenuItem(
                                     text = {
                                         Column {
-                                            Text(
-                                                text = cap.format.displayName,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                            )
-                                            Text(
-                                                text = "${cap.format.bitrateKbps} kbps • ${if (cap.isSupported) "Supported" else "Unsupported"}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontSize = 11.sp,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
+                                            Text(cap.format.displayName, style = MaterialTheme.typography.bodyMedium, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                                            Text("${cap.format.bitrateKbps} kbps • ${if (cap.isSupported) "Supported" else "Unsupported"}", style = MaterialTheme.typography.bodySmall, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     },
                                     leadingIcon = {
-                                        if (isSelected) {
-                                            Icon(
-                                                Icons.Default.Check,
-                                                contentDescription = "Selected",
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        } else {
-                                            Spacer(modifier = Modifier.size(20.dp))
-                                        }
+                                        if (isSelected) Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                        else Spacer(modifier = Modifier.size(20.dp))
                                     },
                                     onClick = {
-                                        viewModel.updateAudioFormat(cap.format)
+                                        if (cap.isSupported) viewModel.updateAudioFormat(cap.format)
                                         formatDropdownExpanded = false
                                     },
                                     modifier = Modifier.testTag("format_option_${cap.format.sampleRate}_${cap.format.channelCount}")
@@ -515,10 +478,9 @@ fun HomeScreen(
                         )
 
                     }
-                    Switch(
+                                        OnOffToggle(
                         checked = prefs.mutePhoneWhileStreaming,
                         onCheckedChange = { viewModel.setMutePhoneWhileStreaming(it) },
-                        colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier.testTag("home_silence_phone_switch")
                     )
                 }
@@ -699,14 +661,10 @@ fun HomeScreen(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
-                    Switch(
+                                        OnOffToggle(
                         checked = prefs.dspEnabled,
                         onCheckedChange = { viewModel.setDspEnabled(it) },
-                        modifier = Modifier.testTag("dsp_master_switch"),
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.primary,
-                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+                        modifier = Modifier.testTag("dsp_master_switch")
                     )
                 }
 
@@ -745,7 +703,7 @@ fun HomeScreen(
                                 )
                             }
                         }
-                        Switch(
+                                                OnOffToggle(
                             checked = prefs.softLimiterEnabled,
                             onCheckedChange = { viewModel.setSoftLimiter(it) },
                             modifier = Modifier.testTag("soft_limiter_switch")
@@ -872,38 +830,24 @@ fun HomeScreen(
             }
         }
 
-        // Live Real-Time Telemetry Tiles — swipe horizontally like the C3 web card strip.
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("telemetry_swipe_row"),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        // Live Real-Time Telemetry — one unified compact card.
+        Card(
+            modifier = Modifier.fillMaxWidth().testTag("telemetry_swipe_row"),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            shape = RoundedCornerShape(18.dp)
         ) {
-            item {
-                TelemetryTile(
-                    icon = Icons.Default.Speed,
-                    value = if (isStreaming) "${telemetry.currentBitrateKbps} kbps" else "0 kbps",
-                    modifier = Modifier.width(156.dp)
-                )
-            }
-            item {
-                TelemetryTile(
-                    icon = Icons.Default.CloudUpload,
-                    value = telemetry.formattedDataTransmitted,
-                    modifier = Modifier.width(156.dp)
-                )
-            }
-            item {
-                TelemetryTile(
-                    icon = Icons.Default.Timer,
-                    value = telemetry.formattedDuration,
-                    modifier = Modifier.width(156.dp)
-                )
-            }
-            item {
-                TelemetryTile(
-                    icon = Icons.Default.GraphicEq,
-                    value = when (telemetry.captureStatus) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TelemetryMetric(Icons.Default.Speed, "Bitrate", if (isStreaming) "${telemetry.currentBitrateKbps} kbps" else "0 kbps", Modifier.weight(1f))
+                TelemetryMetric(Icons.Default.CloudUpload, "Data", telemetry.formattedDataTransmitted, Modifier.weight(1f))
+                TelemetryMetric(Icons.Default.Timer, "Duration", telemetry.formattedDuration, Modifier.weight(1f))
+                TelemetryMetric(
+                    Icons.Default.GraphicEq,
+                    "Capture",
+                    when (telemetry.captureStatus) {
                         CaptureStatus.CAPTURING -> "PCM"
                         CaptureStatus.SILENCE -> "Silence"
                         CaptureStatus.INITIALIZING -> "Init"
@@ -911,8 +855,8 @@ fun HomeScreen(
                         CaptureStatus.ERROR -> "Error"
                         CaptureStatus.IDLE -> "Standby"
                     },
-                    modifier = Modifier.width(156.dp),
-                    iconTint = if (telemetry.captureStatus == CaptureStatus.CAPTURING) StreamEmerald else MaterialTheme.colorScheme.primary
+                    Modifier.weight(1f),
+                    if (telemetry.captureStatus == CaptureStatus.CAPTURING) StreamEmerald else MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -1005,41 +949,21 @@ fun HomeScreen(
 }
 
 @Composable
-fun TelemetryTile(
+fun TelemetryMetric(
     icon: ImageVector,
+    label: String,
     value: String,
     modifier: Modifier = Modifier,
     iconTint: Color = MaterialTheme.colorScheme.primary,
     valueColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        shape = RoundedCornerShape(18.dp)
+    Column(
+        modifier = modifier.padding(horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(13.dp),
-            verticalArrangement = Arrangement.spacedBy(7.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
-                color = valueColor
-            )
-        }
+        Icon(icon, contentDescription = label, tint = iconTint, modifier = Modifier.size(17.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+        Text(value, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, fontSize = 10.sp, color = valueColor, maxLines = 1)
     }
 }
