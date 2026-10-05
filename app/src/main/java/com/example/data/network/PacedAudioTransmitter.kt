@@ -29,7 +29,7 @@ class PacedAudioTransmitter(
             isDaemon = true
             start()
         }
-        Log.i(TAG, "PacedAudioTransmitter started for \${format.displayName} (Pacing: \$ratePacingEnabled)")
+        Log.i(TAG, "PacedAudioTransmitter started for ${format.displayName} (Pacing: $ratePacingEnabled)")
     }
 
     fun stop() {
@@ -80,7 +80,10 @@ class PacedAudioTransmitter(
                 nextScheduledTimeNs = System.nanoTime()
             }
 
-            if (!sendChunkToTransport(chunkBuffer, 0, readCount)) {
+            // Always send the complete scheduled chunk. When capture is briefly
+            // late, the remaining bytes are intentional PCM silence rather than
+            // a short network write that advances the receiver's stream clock.
+            if (!sendChunkToTransport(chunkBuffer, 0, chunkSize)) {
                 LockSupport.parkNanos(10_000_000L)
             }
         }
