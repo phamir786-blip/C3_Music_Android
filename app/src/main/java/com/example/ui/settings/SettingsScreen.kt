@@ -37,8 +37,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -63,6 +61,7 @@ import com.example.model.ProtocolMode
 import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.ErrorCoral
 import com.example.ui.theme.StreamEmerald
+import com.example.ui.components.OnOffToggle
 
 @Composable
 fun SettingsScreen(
@@ -398,12 +397,11 @@ fun SettingsScreen(
                         Text("Auto-Reconnect on Network Drop", fontWeight = FontWeight.SemiBold)
                         Text("Automatically attempts reconnection if TCP socket is closed", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(
+                                        OnOffToggle(
                         checked = prefs.autoReconnect,
                         onCheckedChange = {
                             viewModel.updateNetworkSettings(prefs.targetPort, prefs.httpPort, prefs.connectionTimeoutMs, it, prefs.maxReconnectRetries)
-                        },
-                        colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary)
+                        }
                     )
                 }
 
@@ -418,10 +416,9 @@ fun SettingsScreen(
                         Text("Zero-Jitter Rate Pacing", fontWeight = FontWeight.SemiBold)
                         Text("Regulates outgoing packets at exact real-time playback clock, protecting ESP32-C3 I2S DMA buffer from burst overflows & drops", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Switch(
+                                        OnOffToggle(
                         checked = prefs.ratePacing,
                         onCheckedChange = { viewModel.updateRatePacing(it) },
-                        colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier.testTag("rate_pacing_switch")
                     )
                 }
@@ -441,10 +438,9 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Switch(
+                                        OnOffToggle(
                         checked = prefs.mutePhoneWhileStreaming,
                         onCheckedChange = { viewModel.updateMutePhoneWhileStreaming(it) },
-                        colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier.testTag("mute_phone_speaker_switch")
                     )
                 }
@@ -471,10 +467,9 @@ fun SettingsScreen(
                     Text("AMOLED Pure Black Theme", fontWeight = FontWeight.SemiBold)
                     Text("Optimized for OLED displays with zero-power pure black background", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(
+                                OnOffToggle(
                     checked = prefs.amoledDarkTheme,
-                    onCheckedChange = { viewModel.updateAmoledDarkTheme(it) },
-                    colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary)
+                    onCheckedChange = { viewModel.updateAmoledDarkTheme(it) }
                 )
             }
         }
