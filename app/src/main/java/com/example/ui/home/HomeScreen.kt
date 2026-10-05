@@ -862,13 +862,21 @@ fun HomeScreen(
         }
 
         if (telemetry.reconnectCount > 0) {
-            TelemetryTile(
-                icon = Icons.Default.Refresh,
-                value = "${telemetry.reconnectCount} retries",
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                iconTint = WarningAmber,
-                valueColor = WarningAmber
-            )
+                color = WarningAmber.copy(alpha = 0.10f),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, WarningAmber.copy(alpha = 0.35f))
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Reconnects", tint = WarningAmber, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("${telemetry.reconnectCount} retries", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = WarningAmber)
+                }
+            }
         }
 
         // Dynamic Live Connection & Status Banner
