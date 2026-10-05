@@ -73,6 +73,13 @@ class HttpStreamServer(
                     line = reader.readLine()
                 }
 
+                // HTTP audio is single-cast: keep only one receiver connected at a time.
+                for (existing in clientStreams) {
+                    try { existing.close() } catch (_: Exception) {}
+                }
+                clientStreams.clear()
+                onActiveClientsChanged(0)
+
                 val out = BufferedOutputStream(clientSocket.getOutputStream())
                 val httpHeader = (
                     "HTTP/1.1 200 OK\r\n" +
