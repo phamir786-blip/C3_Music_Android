@@ -10,6 +10,9 @@ object C3Protocol {
     const val DEFAULT_RECEIVER_HOSTNAME = "c3music.local"
     const val DEFAULT_RAW_TCP_PORT = 50005
     const val DEFAULT_HTTP_PORT = 8080
+    const val S3_RECEIVER_HOSTNAME = "s3music.local"
+    const val S3_RECEIVER_TCP_PORT = 50005
+    const val S3_RECEIVER_HTTP_PORT = 8080
 
     // Magic: "C3MS" (0x43, 0x33, 0x4D, 0x53)
     val C3_MAGIC = byteArrayOf(0x43, 0x33, 0x4D, 0x53)
