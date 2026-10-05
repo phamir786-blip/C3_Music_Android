@@ -89,11 +89,10 @@ class AudioCaptureManager(
             return false
         }
 
-        // Calculate chunk size according to latency preset (e.g. 10ms, 25ms, 50ms)
-        val bytesPerMs = (sampleRate * format.frameSizeBytes) / 1000
-        val targetChunkSize = bytesPerMs * latencyPreset.durationMs
-        // Ensure chunk size aligns with frame size and meets hardware minimums
-        bufferSize = (targetChunkSize / format.frameSizeBytes * format.frameSizeBytes).coerceAtLeast(minHardwareBufferSize)
+        // Keep AudioRecord's internal buffer independent from the application read size.
+        // Read in a small, frame-aligned 10ms slice to reduce capture burstiness.
+        val readFrames = ((sampleRate.toLong() * 10L) / 1000L).toInt().coerceAtLeast(1)
+        bufferSize = readFrames * format.frameSizeBytes
 
         // Initialize reusable byte array pool
         bufferQueue.clear()
@@ -125,7 +124,7 @@ class AudioCaptureManager(
                         .setChannelMask(channelConfig)
                         .build()
 
-                    val bufferBytes = (bufferSize * 2).coerceAtLeast(minHardwareBufferSize * 2)
+                    val bufferBytes = minHardwareBufferSize * 2
 
                     try {
                         AudioRecord.Builder()
@@ -174,7 +173,7 @@ class AudioCaptureManager(
                     sampleRate,
                     channelConfig,
                     audioEncoding,
-                    (bufferSize * 2).coerceAtLeast(minHardwareBufferSize * 2)
+                    minHardwareBufferSize * 2
                 )
             }
 

@@ -49,18 +49,21 @@ class PacedAudioTransmitter(
         val maxAllowedDriftNs = 50_000_000L
 
         while (isRunning.get()) {
-            if (ringBuffer.available < chunkSize) {
-                LockSupport.parkNanos(2_000_000L)
-                continue
+            val available = ringBuffer.available
+            val readLength = available.coerceAtMost(chunkSize)
+            val readCount = if (readLength > 0) {
+                ringBuffer.read(chunkBuffer, 0, readLength)
+            } else {
+                0
             }
 
-            val readCount = ringBuffer.read(chunkBuffer, 0, chunkSize)
-            if (readCount <= 0) {
-                LockSupport.parkNanos(2_000_000L)
-                continue
+            // Keep the transport clock continuous if capture briefly falls behind.
+            // Consume any partial PCM available and zero-pad the rest of the chunk.
+            if (readCount < chunkSize) {
+                java.util.Arrays.fill(chunkBuffer, readCount, chunkSize, 0.toByte())
             }
 
-            val chunkDurationNs = (readCount.toLong() * 1_000_000_000L) / bytesPerSec
+            val chunkDurationNs = (chunkSize.toLong() * 1_000_000_000L) / bytesPerSec
             val hasBacklog = ringBuffer.available > (chunkSize * 2)
 
             if (ratePacingEnabled && !hasBacklog) {
