@@ -57,6 +57,18 @@ class AudioCaptureManager(
     ): Boolean {
         if (isRunning.get()) {
             stopCapture()
+        } else {
+            // A previous capture thread may have exited after AudioRecord became invalid.
+            // Clean up that stale AudioRecord before creating its replacement.
+            captureThread?.let { thread ->
+                if (thread !== Thread.currentThread()) {
+                    try {
+                        thread.join(500)
+                    } catch (_: InterruptedException) {}
+                }
+            }
+            captureThread = null
+            releaseAudioRecord()
         }
 
         currentFormat = format
@@ -270,13 +282,16 @@ class AudioCaptureManager(
                 // service, transport, transmitter, and ring buffer alive so the
                 // service can recreate AudioRecord without tearing down the stream.
                 isRunning.set(false)
-                releaseAudioRecord()
+                // Do not release AudioRecord from its own capture thread.
+                // The service recovery path owns the restart and will clean up
+                // this stale instance before creating the replacement.
                 onCaptureStatusChanged(CaptureStatus.ERROR, "AudioRecord became unavailable")
                 break
             } else if (bytesRead == AudioRecord.ERROR_BAD_VALUE) {
                 Log.e(TAG, "AudioRecord ERROR_BAD_VALUE")
                 isRunning.set(false)
-                releaseAudioRecord()
+                // Leave cleanup to the restart/stop path rather than releasing
+                // AudioRecord from the capture thread itself.
                 onCaptureStatusChanged(CaptureStatus.ERROR, "AudioRecord bad parameters")
                 break
             } else {
