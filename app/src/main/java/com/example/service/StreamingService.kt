@@ -443,7 +443,7 @@ class StreamingService : Service() {
                 captureRecoveryJob = serviceScope.launch(Dispatchers.IO) {
                     repeat(5) { attempt ->
                         if (isStopping.get()) return@launch
-                        delay(if (attempt == 0) 0L else 100L)
+                        delay(if (attempt == 0) 100L else 500L)
                         val prefs = AppContainer.getPreferences(this@StreamingService).userPreferences.value
                         Log.w(TAG, "Recovering audio capture (attempt ${attempt + 1}/5)")
                         val restarted = captureManager?.startCapture(
