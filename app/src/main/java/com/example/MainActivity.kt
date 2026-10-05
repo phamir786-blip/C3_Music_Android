@@ -36,6 +36,8 @@ import com.example.ui.home.HomeViewModel
 import com.example.ui.navigation.Screen
 import com.example.ui.devices.C3WebScreen
 import com.example.ui.devices.DevicesScreen
+import com.example.ui.receivers.ReceiversScreen
+import com.example.ui.receivers.ReceiversViewModel
 import com.example.ui.settings.SettingsScreen
 import com.example.ui.settings.SettingsViewModel
 import com.example.ui.theme.C3StreamerTheme
@@ -43,6 +45,7 @@ import com.example.ui.theme.C3StreamerTheme
 class MainActivity : ComponentActivity() {
 
     private val homeViewModel: HomeViewModel by viewModels()
+    private val receiversViewModel: ReceiversViewModel by viewModels()
     private val settingsViewModel: SettingsViewModel by viewModels()
 
     private val startupPermissionLauncher = registerForActivityResult(
@@ -76,6 +79,7 @@ class MainActivity : ComponentActivity() {
             C3StreamerTheme(darkTheme = userPrefs.amoledDarkTheme) {
                 MainAppContent(
                     homeViewModel = homeViewModel,
+                    receiversViewModel = receiversViewModel,
                     settingsViewModel = settingsViewModel
                 )
             }
@@ -91,6 +95,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainAppContent(
     homeViewModel: HomeViewModel,
+    receiversViewModel: ReceiversViewModel,
     settingsViewModel: SettingsViewModel
 ) {
     val navController = rememberNavController()
@@ -153,6 +158,17 @@ fun MainAppContent(
                 )
             }
             composable(Screen.Receivers.route) {
+                ReceiversScreen(
+                    viewModel = receiversViewModel,
+                    onReceiverSelected = {
+                        navController.navigate(Screen.Home.route) {
+                            launchSingleTop = true
+                            popUpTo(Screen.Home.route) { inclusive = false }
+                        }
+                    }
+                )
+            }
+            composable(Screen.Devices.route) {
                 DevicesScreen(
                     onOpenC3 = {
                         navController.navigate(Screen.C3Web.route) {
