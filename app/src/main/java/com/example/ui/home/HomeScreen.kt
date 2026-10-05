@@ -345,27 +345,95 @@ fun HomeScreen(
                         DropdownMenu(
                             expanded = formatDropdownExpanded,
                             onDismissRequest = { formatDropdownExpanded = false },
-                            modifier = Modifier.background(MaterialTheme.colorScheme.surface).testTag("audio_format_dropdown_menu")
+                            modifier = Modifier.width(300.dp).testTag("audio_format_dropdown_menu")
                         ) {
-                            supportedFormats.forEach { cap ->
-                                val isSelected = prefs.audioFormat == cap.format
-                                DropdownMenuItem(
-                                    text = {
-                                        Column {
-                                            Text(cap.format.displayName, style = MaterialTheme.typography.bodyMedium, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-                                            Text("${cap.format.bitrateKbps} kbps • ${if (cap.isSupported) "Supported" else "Unsupported"}", style = MaterialTheme.typography.bodySmall, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        }
-                                    },
-                                    leadingIcon = {
-                                        if (isSelected) Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                                        else Spacer(modifier = Modifier.size(20.dp))
-                                    },
-                                    onClick = {
-                                        if (cap.isSupported) viewModel.updateAudioFormat(cap.format)
-                                        formatDropdownExpanded = false
-                                    },
-                                    modifier = Modifier.testTag("format_option_${cap.format.sampleRate}_${cap.format.channelCount}")
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text(
+                                    text = "Audio Quality",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                 )
+                                Text(
+                                    text = "Choose the format sent to the C3 receiver",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 8.dp)
+                                )
+                                supportedFormats.forEachIndexed { index, cap ->
+                                    val isSelected = prefs.audioFormat == cap.format
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable(enabled = cap.isSupported) {
+                                                viewModel.updateAudioFormat(cap.format)
+                                                formatDropdownExpanded = false
+                                            }
+                                            .testTag("format_option_${cap.format.sampleRate}_${cap.format.channelCount}"),
+                                        color = when {
+                                            isSelected -> MaterialTheme.colorScheme.primaryContainer
+                                            cap.isSupported -> MaterialTheme.colorScheme.surface
+                                            else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                                        },
+                                        border = BorderStroke(
+                                            1.dp,
+                                            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+                                            else MaterialTheme.colorScheme.outlineVariant
+                                        ),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(
+                                                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                                    else MaterialTheme.colorScheme.surfaceVariant
+                                                ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = if (isSelected) Icons.Default.Check else Icons.Default.MusicNote,
+                                                    contentDescription = null,
+                                                    tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = cap.format.displayName,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = "${cap.format.sampleRate / 1000} kHz • ${cap.format.bitDepth}-bit • ${cap.format.channelCount}ch",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    fontSize = 11.sp
+                                                )
+                                            }
+                                            Column(horizontalAlignment = Alignment.End) {
+                                                Text(
+                                                    text = "${cap.format.bitrateKbps} kbps",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = if (cap.isSupported) "Available" else "Unavailable",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = if (cap.isSupported) StreamEmerald else MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                    }
+                                    if (index < supportedFormats.lastIndex) Spacer(modifier = Modifier.height(6.dp))
+                                }
                             }
                         }
                     }
