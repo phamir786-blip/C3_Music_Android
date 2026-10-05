@@ -39,14 +39,18 @@ data class AudioStreamFormat(
     companion object {
         val FORMAT_44K_16BIT_STEREO = AudioStreamFormat(44100, 16, 2)
         val FORMAT_48K_16BIT_STEREO = AudioStreamFormat(48000, 16, 2)
+        val FORMAT_96K_16BIT_STEREO = AudioStreamFormat(96000, 16, 2)
         val FORMAT_44K_24BIT_STEREO = AudioStreamFormat(44100, 24, 2)
         val FORMAT_48K_24BIT_STEREO = AudioStreamFormat(48000, 24, 2)
+        val FORMAT_96K_24BIT_STEREO = AudioStreamFormat(96000, 24, 2)
 
         val ALL_PRESETS = listOf(
             FORMAT_44K_16BIT_STEREO,
             FORMAT_48K_16BIT_STEREO,
+            FORMAT_96K_16BIT_STEREO,
             FORMAT_44K_24BIT_STEREO,
-            FORMAT_48K_24BIT_STEREO
+            FORMAT_48K_24BIT_STEREO,
+            FORMAT_96K_24BIT_STEREO
         )
     }
 }
