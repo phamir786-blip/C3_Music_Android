@@ -34,8 +34,6 @@ import androidx.core.content.ContextCompat
 import com.example.ui.home.HomeScreen
 import com.example.ui.home.HomeViewModel
 import com.example.ui.navigation.Screen
-import com.example.ui.devices.C3WebScreen
-import com.example.ui.devices.DevicesScreen
 import com.example.ui.receivers.ReceiversScreen
 import com.example.ui.receivers.ReceiversViewModel
 import com.example.ui.settings.SettingsScreen
@@ -106,7 +104,7 @@ fun MainAppContent(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (currentRoute != Screen.C3Web.route) NavigationBar(
+            NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.testTag("bottom_nav_bar")
             ) {
@@ -166,20 +164,6 @@ fun MainAppContent(
                             popUpTo(Screen.Home.route) { inclusive = false }
                         }
                     }
-                )
-            }
-            composable(Screen.Devices.route) {
-                DevicesScreen(
-                    onOpenC3 = {
-                        navController.navigate(Screen.C3Web.route) {
-                            launchSingleTop = true
-                        }
-                    }
-                )
-            }
-            composable(Screen.C3Web.route) {
-                C3WebScreen(
-                    onBack = { navController.popBackStack() }
                 )
             }
             composable(Screen.Settings.route) {

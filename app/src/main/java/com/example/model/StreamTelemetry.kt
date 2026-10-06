@@ -7,7 +7,6 @@ data class StreamTelemetry(
     val audioSource: AudioSourceType = AudioSourceType.INTERNAL_AUDIO,
     val targetHost: String = "c3music.local",
     val targetPort: Int = 50005,
-    val protocolMode: ProtocolMode = ProtocolMode.RAW_TCP_CLIENT,
     val bytesTransmitted: Long = 0L,
     val durationSeconds: Long = 0L,
     val currentBitrateKbps: Int = 0,

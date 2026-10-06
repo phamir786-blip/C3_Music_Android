@@ -92,7 +92,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.AudioSourceType
 import com.example.model.CaptureStatus
-import com.example.model.ProtocolMode
 import com.example.model.StreamingState
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
@@ -211,11 +210,7 @@ fun HomeScreen(
                     }
                     Spacer(modifier = Modifier.width(9.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        val titleText = when (prefs.protocolMode) {
-                            ProtocolMode.RAW_TCP_SERVER -> "Phone TCP Server :${prefs.targetPort}"
-                            ProtocolMode.RAW_TCP_CLIENT -> "Target: ${prefs.targetHost}:${prefs.targetPort}"
-                            ProtocolMode.HTTP_SERVER -> "HTTP Server :${prefs.httpPort}"
-                        }
+                        val titleText = "Target: " + prefs.targetHost + ":" + prefs.targetPort
                         Text(
                             text = titleText,
                             style = MaterialTheme.typography.labelLarge,
@@ -991,7 +986,7 @@ fun HomeScreen(
                     Icon(Icons.Default.Router, contentDescription = "Listening", tint = WarningAmber)
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Listening on port ${prefs.targetPort} • Waiting for ESP32-C3 to connect...",
+                        text = "Sending UDP audio to ${prefs.targetHost}:${prefs.targetPort}",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = WarningAmber

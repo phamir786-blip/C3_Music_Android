@@ -5,8 +5,6 @@ import android.content.SharedPreferences
 import com.example.model.AudioSourceType
 import com.example.model.AudioStreamFormat
 import com.example.model.BufferLatencyPreset
-import com.example.model.HeaderMode
-import com.example.model.ProtocolMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,13 +12,10 @@ import kotlinx.coroutines.flow.asStateFlow
 data class UserPreferences(
     val targetHost: String = "c3music.local",
     val targetPort: Int = 50005,
-    val httpPort: Int = 8080,
-    val protocolMode: ProtocolMode = ProtocolMode.RAW_TCP_SERVER,
     val audioSource: AudioSourceType = AudioSourceType.INTERNAL_AUDIO,
     val sampleRate: Int = 44100,
     val bitDepth: Int = 16,
     val channelCount: Int = 2,
-    val headerMode: HeaderMode = HeaderMode.AUTO,
     val bufferPreset: BufferLatencyPreset = BufferLatencyPreset.BALANCED,
     val transmissionVolume: Int = 100,
     val isMuted: Boolean = false,
@@ -60,21 +55,12 @@ class UserPreferencesRepository(context: Context) {
         return UserPreferences(
             targetHost = prefs.getString("target_host", "c3music.local") ?: "c3music.local",
             targetPort = prefs.getInt("target_port", 50005),
-            httpPort = prefs.getInt("http_port", 8080),
-            protocolMode = try {
-                ProtocolMode.valueOf(prefs.getString("protocol_mode", ProtocolMode.RAW_TCP_SERVER.name) ?: ProtocolMode.RAW_TCP_SERVER.name)
-            } catch (_: Exception) {
-                ProtocolMode.RAW_TCP_SERVER
-            },
             audioSource = AudioSourceType.valueOf(
                 prefs.getString("audio_source", AudioSourceType.INTERNAL_AUDIO.name) ?: AudioSourceType.INTERNAL_AUDIO.name
             ),
             sampleRate = prefs.getInt("sample_rate", 44100),
             bitDepth = prefs.getInt("bit_depth", 16),
             channelCount = prefs.getInt("channel_count", 2),
-            headerMode = HeaderMode.valueOf(
-                prefs.getString("header_mode", HeaderMode.AUTO.name) ?: HeaderMode.AUTO.name
-            ),
             bufferPreset = BufferLatencyPreset.valueOf(
                 prefs.getString("buffer_preset", BufferLatencyPreset.BALANCED.name) ?: BufferLatencyPreset.BALANCED.name
             ),
@@ -123,16 +109,6 @@ class UserPreferencesRepository(context: Context) {
         )
     }
 
-    fun updateHeaderMode(mode: HeaderMode) {
-        prefs.edit().putString("header_mode", mode.name).apply()
-        _userPreferences.value = _userPreferences.value.copy(headerMode = mode)
-    }
-
-    fun updateProtocolMode(mode: ProtocolMode) {
-        prefs.edit().putString("protocol_mode", mode.name).apply()
-        _userPreferences.value = _userPreferences.value.copy(protocolMode = mode)
-    }
-
     fun updateBufferPreset(preset: BufferLatencyPreset) {
         prefs.edit().putString("buffer_preset", preset.name).apply()
         _userPreferences.value = _userPreferences.value.copy(bufferPreset = preset)
@@ -154,27 +130,9 @@ class UserPreferencesRepository(context: Context) {
         _userPreferences.value = _userPreferences.value.copy(ratePacing = enabled)
     }
 
-    fun updateNetworkSettings(
-        tcpPort: Int,
-        httpPort: Int,
-        timeoutMs: Int,
-        autoReconnect: Boolean,
-        maxRetries: Int
-    ) {
-        prefs.edit()
-            .putInt("target_port", tcpPort)
-            .putInt("http_port", httpPort)
-            .putInt("conn_timeout_ms", timeoutMs)
-            .putBoolean("auto_reconnect", autoReconnect)
-            .putInt("max_reconnect_retries", maxRetries)
-            .apply()
-        _userPreferences.value = _userPreferences.value.copy(
-            targetPort = tcpPort,
-            httpPort = httpPort,
-            connectionTimeoutMs = timeoutMs,
-            autoReconnect = autoReconnect,
-            maxReconnectRetries = maxRetries
-        )
+    fun updateNetworkSettings(udpPort:Int,autoReconnect:Boolean,maxRetries:Int){
+        prefs.edit().putInt("target_port",udpPort).putBoolean("auto_reconnect",autoReconnect).putInt("max_reconnect_retries",maxRetries).apply()
+        _userPreferences.value=_userPreferences.value.copy(targetPort=udpPort,autoReconnect=autoReconnect,maxReconnectRetries=maxRetries)
     }
 
     fun updateAmoledDarkTheme(enabled: Boolean) {

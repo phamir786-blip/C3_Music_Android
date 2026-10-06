@@ -56,8 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.AudioStreamFormat
 import com.example.model.BufferLatencyPreset
-import com.example.model.HeaderMode
-import com.example.model.ProtocolMode
 import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.ErrorCoral
 import com.example.ui.theme.StreamEmerald
@@ -71,8 +69,6 @@ fun SettingsScreen(
     val prefs by viewModel.userPreferences.collectAsState()
     val formatCaps = viewModel.supportedFormatCapabilities
 
-    var tcpPortText by remember(prefs.targetPort) { mutableStateOf(prefs.targetPort.toString()) }
-    var httpPortText by remember(prefs.httpPort) { mutableStateOf(prefs.httpPort.toString()) }
     var timeoutText by remember(prefs.connectionTimeoutMs) { mutableStateOf(prefs.connectionTimeoutMs.toString()) }
     var retriesText by remember(prefs.maxReconnectRetries) { mutableStateOf(prefs.maxReconnectRetries.toString()) }
 
@@ -148,50 +144,6 @@ fun SettingsScreen(
             }
         }
 
-        // C3 Protocol & Header Negotiation Section
-        SettingsSectionHeader(title = "C3 PROTOCOL NEGOTIATION", subtitle = "How the receiver recognizes sample rate and bit depth")
-
-        Card(
-            modifier = Modifier.fillMaxWidth().testTag("header_mode_card"),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                HeaderMode.values().forEach { mode ->
-                    val isSelected = prefs.headerMode == mode
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable { viewModel.updateHeaderMode(mode) }
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = isSelected,
-                            onClick = { viewModel.updateHeaderMode(mode) },
-                            colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = mode.displayName,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = mode.description,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
         // Buffer & Latency Section
         SettingsSectionHeader(title = "BUFFER & LATENCY PRESET", subtitle = "Tune trade-off between ultra-low delay and network stability")
 
@@ -236,214 +188,14 @@ fun SettingsScreen(
             }
         }
 
-        // Transport Protocol Selection
-        SettingsSectionHeader(title = "TRANSMISSION MODE", subtitle = "Choose between Raw TCP client or local HTTP server")
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProtocolMode.values().forEach { mode ->
-                    val isSelected = prefs.protocolMode == mode
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable { viewModel.updateProtocolMode(mode) }
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = isSelected,
-                            onClick = { viewModel.updateProtocolMode(mode) },
-                            colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = mode.displayName,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-
-        // Network Ports & Reconnect Settings
-        SettingsSectionHeader(title = "NETWORK CONFIGURATION", subtitle = "Port numbers and automatic reconnect policy")
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Local Phone IP banner with 1-tap copy
-                val context = LocalContext.current
-                val localPhoneIp = remember { NetworkUtils.getLocalIpAddress(context) ?: "Unavailable" }
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                            val clip = ClipData.newPlainText("Phone IP", localPhoneIp)
-                            clipboard?.setPrimaryClip(clip)
-                            Toast.makeText(context, "Copied Phone IP: $localPhoneIp", Toast.LENGTH_SHORT).show()
-                        }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "This Phone's Wi-Fi IP",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = localPhoneIp,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = "Enter this in C3 Web app ('Phone host / IP') if you need manual pull",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        IconButton(onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                            val clip = ClipData.newPlainText("Phone IP", localPhoneIp)
-                            clipboard?.setPrimaryClip(clip)
-                            Toast.makeText(context, "Copied Phone IP: $localPhoneIp", Toast.LENGTH_SHORT).show()
-                        }) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy IP", tint = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                }
-
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(
-                        value = tcpPortText,
-                        onValueChange = {
-                            tcpPortText = it
-                            val p = it.toIntOrNull()
-                            if (p != null) viewModel.updateNetworkSettings(p, prefs.httpPort, prefs.connectionTimeoutMs, prefs.autoReconnect, prefs.maxReconnectRetries)
-                        },
-                        label = { Text("TCP Port (50005)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    OutlinedTextField(
-                        value = httpPortText,
-                        onValueChange = {
-                            httpPortText = it
-                            val p = it.toIntOrNull()
-                            if (p != null) viewModel.updateNetworkSettings(prefs.targetPort, p, prefs.connectionTimeoutMs, prefs.autoReconnect, prefs.maxReconnectRetries)
-                        },
-                        label = { Text("HTTP Port (8080)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(
-                        value = timeoutText,
-                        onValueChange = {
-                            timeoutText = it
-                            val t = it.toIntOrNull()
-                            if (t != null) viewModel.updateNetworkSettings(prefs.targetPort, prefs.httpPort, t, prefs.autoReconnect, prefs.maxReconnectRetries)
-                        },
-                        label = { Text("Timeout (ms)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    OutlinedTextField(
-                        value = retriesText,
-                        onValueChange = {
-                            retriesText = it
-                            val r = it.toIntOrNull()
-                            if (r != null) viewModel.updateNetworkSettings(prefs.targetPort, prefs.httpPort, prefs.connectionTimeoutMs, prefs.autoReconnect, r)
-                        },
-                        label = { Text("Max Retries") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Auto-Reconnect on Network Drop", fontWeight = FontWeight.SemiBold)
-                        Text("Automatically attempts reconnection if TCP socket is closed", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                                        OnOffToggle(
-                        checked = prefs.autoReconnect,
-                        onCheckedChange = {
-                            viewModel.updateNetworkSettings(prefs.targetPort, prefs.httpPort, prefs.connectionTimeoutMs, it, prefs.maxReconnectRetries)
-                        }
-                    )
-                }
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Zero-Jitter Rate Pacing", fontWeight = FontWeight.SemiBold)
-                        Text("Regulates outgoing packets at exact real-time playback clock, protecting ESP32-C3 I2S DMA buffer from burst overflows & drops", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                                        OnOffToggle(
-                        checked = prefs.ratePacing,
-                        onCheckedChange = { viewModel.updateRatePacing(it) },
-                        modifier = Modifier.testTag("rate_pacing_switch")
-                    )
-                }
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Silence Phone Speaker During Stream", fontWeight = FontWeight.SemiBold)
-                        Text(
-                            "Automatically sets phone media volume to 0 when streaming starts and restores it on stop. If your phone model captures silence when muted, turn this OFF and use 1 volume bar instead.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                                        OnOffToggle(
-                        checked = prefs.mutePhoneWhileStreaming,
-                        onCheckedChange = { viewModel.updateMutePhoneWhileStreaming(it) },
-                        modifier = Modifier.testTag("mute_phone_speaker_switch")
-                    )
-                }
+        SettingsSectionHeader(title = "UDP NETWORK", subtitle = "Direct single-cast audio to the ESP32 receiver")
+        Card(modifier=Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),border=BorderStroke(1.dp,MaterialTheme.colorScheme.outline),shape=RoundedCornerShape(16.dp)){
+            Column(modifier=Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+                OutlinedTextField(value=prefs.targetHost,onValueChange={viewModel.updateTarget(it,prefs.targetPort)},label={Text("Receiver Hostname / IP")},singleLine=true,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(12.dp))
+                OutlinedTextField(value=prefs.targetPort.toString(),onValueChange={it.toIntOrNull()?.let{q->viewModel.updateTarget(prefs.targetHost,q)}},label={Text("UDP Port")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(12.dp))
+                OnOffToggle(checked=prefs.autoReconnect,onCheckedChange={viewModel.updateNetworkSettings(prefs.targetPort,it,prefs.maxReconnectRetries)})
+                OutlinedTextField(value=retriesText,onValueChange={retriesText=it;it.toIntOrNull()?.let{q->viewModel.updateNetworkSettings(prefs.targetPort,prefs.autoReconnect,q)}},label={Text("Max Retries")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(12.dp))
+                OnOffToggle(checked=prefs.ratePacing,onCheckedChange={viewModel.updateRatePacing(it)},modifier=Modifier.testTag("rate_pacing_switch"))
             }
         }
 

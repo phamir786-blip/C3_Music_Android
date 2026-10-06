@@ -27,16 +27,13 @@ import com.example.AppContainer
 import com.example.C3StreamerApplication
 import com.example.MainActivity
 import com.example.R
-import com.example.data.network.HttpStreamServer
 import com.example.data.network.PacedAudioTransmitter
-import com.example.data.network.TcpStreamClient
-import com.example.data.network.TcpStreamServer
+import com.example.data.network.UdpStreamClient
 import com.example.data.preferences.UserPreferences
 import com.example.domain.audio.AudioCaptureManager
 import com.example.domain.audio.AudioRingBuffer
 import com.example.model.AudioSourceType
 import com.example.model.CaptureStatus
-import com.example.model.ProtocolMode
 import com.example.model.StreamTelemetry
 import com.example.model.StreamingState
 import kotlinx.coroutines.CoroutineScope
@@ -65,11 +62,9 @@ class StreamingService : Service() {
     // Lock-free ring buffer (128 KB = ~370ms of 44.1kHz 16-bit stereo PCM)
     private val ringBuffer = AudioRingBuffer(128 * 1024)
     private var pacedTransmitter: PacedAudioTransmitter? = null
+    private var udpClient: UdpStreamClient? = null
 
     private var captureManager: AudioCaptureManager? = null
-    private var tcpServer: TcpStreamServer? = null
-    private var tcpClient: TcpStreamClient? = null
-    private var httpServer: HttpStreamServer? = null
 
     private var statsJob: Job? = null
     private var reconnectJob: Job? = null
@@ -117,36 +112,14 @@ class StreamingService : Service() {
             setReferenceCounted(false)
         }
 
-        tcpServer = TcpStreamServer(
+        udpClient = UdpStreamClient(
             onStateChanged = { state, error -> handleTransportState(state, error) },
-            onBytesTransmitted = { /* updated lock-free via atomic counter */ }
+            onBytesTransmitted = { }
         )
-
-        tcpClient = TcpStreamClient(
-            onStateChanged = { state, error -> handleTransportState(state, error) },
-            onBytesTransmitted = { /* updated lock-free via atomic counter */ }
-        )
-
-        httpServer = HttpStreamServer(
-            onStateChanged = { state, error -> handleTransportState(state, error) },
-            onBytesTransmitted = { /* updated lock-free via atomic counter */ },
-            onActiveClientsChanged = { count ->
-                _telemetry.value = _telemetry.value.copy(activeClientsCount = count)
-            }
-        )
-
-        // Paced transmitter pulls from ringBuffer and sends to TCP or HTTP with zero-jitter rate regulation
         pacedTransmitter = PacedAudioTransmitter(
             ringBuffer = ringBuffer,
             sendChunkToTransport = { buffer, offset, length ->
-                when (_telemetry.value.protocolMode) {
-                    ProtocolMode.RAW_TCP_SERVER -> tcpServer?.sendAudioChunk(buffer, offset, length) ?: false
-                    ProtocolMode.RAW_TCP_CLIENT -> tcpClient?.sendAudioChunk(buffer, offset, length) ?: false
-                    ProtocolMode.HTTP_SERVER -> {
-                        httpServer?.broadcastAudioChunk(buffer, offset, length)
-                        true
-                    }
-                }
+                udpClient?.sendAudioChunk(buffer, offset, length) ?: false
             }
         )
 
@@ -173,7 +146,7 @@ class StreamingService : Service() {
                 val currentState = _telemetry.value.streamingState
                 if (currentState == StreamingState.RECONNECTING || currentState == StreamingState.DISCONNECTED) {
                     val prefs = AppContainer.getPreferences(this@StreamingService).userPreferences.value
-                    if (prefs.autoReconnect && prefs.protocolMode == ProtocolMode.RAW_TCP_CLIENT) {
+                    if (prefs.autoReconnect) {
                         Log.i(TAG, "Wi-Fi restored! Instantly triggering C3 reconnect.")
                         reconnectJob?.cancel()
                         triggerAutoReconnect(prefs, instant = true)
@@ -285,7 +258,6 @@ class StreamingService : Service() {
             audioSource = prefs.audioSource,
             targetHost = prefs.targetHost,
             targetPort = prefs.targetPort,
-            protocolMode = prefs.protocolMode,
             volumePercent = prefs.transmissionVolume,
             isMuted = prefs.isMuted
         )
@@ -331,9 +303,6 @@ class StreamingService : Service() {
         // Clear ring buffer for fresh stream
         ringBuffer.clear()
 
-        // Start Paced Transmitter
-        pacedTransmitter?.start(prefs.audioFormat)
-
         // Start Audio Capture
         val captureOk = captureManager?.startCapture(
             format = prefs.audioFormat,
@@ -369,29 +338,8 @@ class StreamingService : Service() {
 
     private fun startTransport(prefs: UserPreferences) {
         serviceScope.launch(Dispatchers.IO) {
-            when (prefs.protocolMode) {
-                ProtocolMode.RAW_TCP_SERVER -> {
-                    tcpServer?.startServer(
-                        port = prefs.targetPort,
-                        format = prefs.audioFormat,
-                        headerMode = prefs.headerMode
-                    )
-                }
-                ProtocolMode.RAW_TCP_CLIENT -> {
-                    tcpClient?.connectAndStart(
-                        host = prefs.targetHost,
-                        port = prefs.targetPort,
-                        timeoutMs = prefs.connectionTimeoutMs,
-                        format = prefs.audioFormat,
-                        headerMode = prefs.headerMode
-                    )
-                }
-                ProtocolMode.HTTP_SERVER -> {
-                    httpServer?.startServer(
-                        port = prefs.httpPort,
-                        format = prefs.audioFormat
-                    )
-                }
+            if (udpClient?.connectAndStart(prefs.targetHost, prefs.targetPort, prefs.audioFormat) == true) {
+                pacedTransmitter?.start(prefs.audioFormat)
             }
         }
     }
@@ -423,7 +371,7 @@ class StreamingService : Service() {
             reconnectAttempts = 0
         } else if (state == StreamingState.DISCONNECTED && !isStopping.get()) {
             val prefs = AppContainer.getPreferences(this).userPreferences.value
-            if (prefs.autoReconnect && prefs.protocolMode == ProtocolMode.RAW_TCP_CLIENT) {
+            if (prefs.autoReconnect) {
                 triggerAutoReconnect(prefs, instant = false)
             }
         }
@@ -500,14 +448,8 @@ class StreamingService : Service() {
             }
 
             if (!isStopping.get()) {
-                Log.i(TAG, "Silent reconnect executing to ${prefs.targetHost}:${prefs.targetPort}")
-                tcpClient?.connectAndStart(
-                    host = prefs.targetHost,
-                    port = prefs.targetPort,
-                    timeoutMs = prefs.connectionTimeoutMs,
-                    format = prefs.audioFormat,
-                    headerMode = prefs.headerMode
-                )
+                Log.i(TAG, "Silent UDP reconnect executing to " + prefs.targetHost + ":" + prefs.targetPort)
+                udpClient?.connectAndStart(prefs.targetHost, prefs.targetPort, prefs.audioFormat)
             }
         }
     }
@@ -516,15 +458,9 @@ class StreamingService : Service() {
         val prefs = AppContainer.getPreferences(this).userPreferences.value
         reconnectAttempts = 0
         serviceScope.launch(Dispatchers.IO) {
-            tcpClient?.disconnect(isManual = false)
+            udpClient?.disconnect(isManual = false)
             delay(150)
-            tcpClient?.connectAndStart(
-                host = prefs.targetHost,
-                port = prefs.targetPort,
-                timeoutMs = prefs.connectionTimeoutMs,
-                format = prefs.audioFormat,
-                headerMode = prefs.headerMode
-            )
+            udpClient?.connectAndStart(prefs.targetHost, prefs.targetPort, prefs.audioFormat)
         }
     }
 
@@ -589,11 +525,7 @@ class StreamingService : Service() {
                 val now = System.currentTimeMillis()
                 val duration = if (sessionStartTime > 0) (now - sessionStartTime) / 1000 else 0
 
-                val currentBytes = when (_telemetry.value.protocolMode) {
-                    ProtocolMode.RAW_TCP_SERVER -> tcpServer?.totalBytesWritten?.get() ?: 0L
-                    ProtocolMode.RAW_TCP_CLIENT -> tcpClient?.totalBytesWritten?.get() ?: 0L
-                    ProtocolMode.HTTP_SERVER -> httpServer?.totalBytesWritten?.get() ?: 0L
-                }
+                val currentBytes = udpClient?.totalBytesWritten?.get() ?: 0L
 
                 val deltaBytes = currentBytes - lastBytesCount
                 lastBytesCount = currentBytes
@@ -674,9 +606,7 @@ class StreamingService : Service() {
         captureRecoveryJob?.cancel()
 
         pacedTransmitter?.stop()
-        tcpServer?.stopServer()
-        tcpClient?.disconnect(isManual = true)
-        httpServer?.stopServer()
+        udpClient?.disconnect(isManual = true)
         captureManager?.stopCapture()
         ringBuffer.clear()
 
