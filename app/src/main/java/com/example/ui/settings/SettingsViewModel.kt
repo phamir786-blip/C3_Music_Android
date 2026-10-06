@@ -7,8 +7,6 @@ import com.example.domain.audio.AudioDeviceCapabilityDetector
 import com.example.domain.audio.AudioFormatCapability
 import com.example.model.AudioStreamFormat
 import com.example.model.BufferLatencyPreset
-import com.example.model.HeaderMode
-import com.example.model.ProtocolMode
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -18,31 +16,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val supportedFormatCapabilities: List<AudioFormatCapability> =
         AudioDeviceCapabilityDetector.getSupportedPresets()
 
+    fun updateTarget(host:String,port:Int){prefsRepo.updateTarget(host,port)}
+
     fun updateAudioFormat(format: AudioStreamFormat) {
         prefsRepo.updateAudioFormat(format.sampleRate, format.bitDepth, format.channelCount)
-    }
-
-    fun updateHeaderMode(mode: HeaderMode) {
-        prefsRepo.updateHeaderMode(mode)
     }
 
     fun updateBufferPreset(preset: BufferLatencyPreset) {
         prefsRepo.updateBufferPreset(preset)
     }
 
-    fun updateProtocolMode(mode: ProtocolMode) {
-        prefsRepo.updateProtocolMode(mode)
-    }
-
-    fun updateNetworkSettings(
-        tcpPort: Int,
-        httpPort: Int,
-        timeoutMs: Int,
-        autoReconnect: Boolean,
-        maxRetries: Int
-    ) {
-        prefsRepo.updateNetworkSettings(tcpPort, httpPort, timeoutMs, autoReconnect, maxRetries)
-    }
+    fun updateNetworkSettings(udpPort:Int,autoReconnect:Boolean,maxRetries:Int){prefsRepo.updateNetworkSettings(udpPort,autoReconnect,maxRetries)}
 
     fun updateAmoledDarkTheme(enabled: Boolean) {
         prefsRepo.updateAmoledDarkTheme(enabled)

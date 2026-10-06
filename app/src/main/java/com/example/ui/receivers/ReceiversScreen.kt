@@ -272,7 +272,7 @@ fun ReceiversScreen(
                         OutlinedTextField(
                             value = manualPort,
                             onValueChange = { manualPort = it },
-                            label = { Text("Port (TCP)") },
+                            label = { Text("UDP Port") },
                             placeholder = { Text("50005") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -329,8 +329,7 @@ fun ReceiversScreen(
                                 viewModel.addReceiver(
                                     name = manualName.ifBlank { manualHost },
                                     host = manualHost.trim(),
-                                    tcpPort = port,
-                                    httpPort = 8080,
+                                    udpPort = port,
                                     isDefault = false
                                 )
                                 Toast.makeText(context, "Saved to profiles", Toast.LENGTH_SHORT).show()
@@ -374,7 +373,7 @@ fun ReceiversScreen(
             SavedReceiverCard(
                 receiver = saved,
                 onSelect = {
-                    viewModel.selectReceiver(saved.host, saved.tcpPort)
+                    viewModel.selectReceiver(saved.host, saved.udpPort)
                     Toast.makeText(context, "Selected ${saved.name}", Toast.LENGTH_SHORT).show()
                     onReceiverSelected()
                 },
@@ -416,14 +415,14 @@ private fun HardCodedReceiverTargets(
                 Text("ESP32-C3  •  c3music.local:50005")
             }
             Button(
-                onClick = { onSelect(C3Protocol.S3_RECEIVER_HOSTNAME, C3Protocol.S3_RECEIVER_TCP_PORT) },
+                onClick = { onSelect(C3Protocol.S3_RECEIVER_HOSTNAME, C3Protocol.S3_RECEIVER_UDP_PORT) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text("S3 N16R8  •  s3music.local:50005")
             }
             Text(
-                text = "TCP: 50005  •  HTTP: 8080  •  one active receiver at a time",
+                text = "UDP: 50005  •  one active receiver at a time",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -532,7 +531,7 @@ fun SavedReceiverCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${receiver.host}:${receiver.tcpPort}",
+                        text = "${receiver.host}:${receiver.udpPort}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -15,8 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.net.InetSocketAddress
-import java.net.Socket
 
 class ReceiversViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -53,18 +51,17 @@ class ReceiversViewModel(application: Application) : AndroidViewModel(applicatio
         prefsRepo.updateTarget(host, port)
     }
 
-    fun addReceiver(name: String, host: String, tcpPort: Int, httpPort: Int, isDefault: Boolean) {
+    fun addReceiver(name: String, host: String, udpPort: Int, isDefault: Boolean) {
         viewModelScope.launch {
             val entity = ReceiverEntity(
                 name = name.ifBlank { host },
                 host = host.trim(),
-                tcpPort = tcpPort,
-                httpPort = httpPort,
+                udpPort = udpPort,
                 isDefault = isDefault
             )
             repository.addReceiver(entity)
             if (isDefault) {
-                prefsRepo.updateTarget(host, tcpPort)
+                prefsRepo.updateTarget(host, udpPort)
             }
         }
     }
@@ -78,23 +75,15 @@ class ReceiversViewModel(application: Application) : AndroidViewModel(applicatio
     fun setDefaultReceiver(receiver: ReceiverEntity) {
         viewModelScope.launch {
             repository.setDefault(receiver.id)
-            prefsRepo.updateTarget(receiver.host, receiver.tcpPort)
+            prefsRepo.updateTarget(receiver.host, receiver.udpPort)
         }
     }
 
-    fun testConnection(host: String, port: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _pingResult.value = "Testing connection to $host:$port…"
-            val start = System.currentTimeMillis()
-            try {
-                val socket = Socket()
-                socket.connect(InetSocketAddress(host, port), 2500)
-                val latency = System.currentTimeMillis() - start
-                socket.close()
-                _pingResult.value = "Connected successfully! Latency: ${latency}ms"
-            } catch (e: Exception) {
-                _pingResult.value = "Connection failed: ${e.message}"
-            }
+    fun testConnection(host:String,port:Int){
+        viewModelScope.launch(Dispatchers.IO){
+            _pingResult.value="Resolving "+host+"…"
+            try{val a=java.net.InetAddress.getByName(host);_pingResult.value="Resolved "+a.hostAddress}
+            catch(e:Exception){_pingResult.value="Resolution failed: "+e.message}
         }
     }
 

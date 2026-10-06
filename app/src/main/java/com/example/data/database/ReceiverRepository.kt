@@ -13,8 +13,7 @@ class ReceiverRepository(private val receiverDao: ReceiverDao) {
         val defaultC3 = ReceiverEntity(
             name = "ESP32-C3 Music Receiver",
             host = "c3music.local",
-            tcpPort = 50005,
-            httpPort = 8080,
+            udpPort = 50005,
             isDefault = true,
             notes = "Standard mDNS hostname for C3_Music receiver"
         )

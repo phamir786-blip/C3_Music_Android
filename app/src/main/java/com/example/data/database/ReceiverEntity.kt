@@ -9,8 +9,7 @@ data class ReceiverEntity(
     val id: Long = 0,
     val name: String,
     val host: String,
-    val tcpPort: Int = 50005,
-    val httpPort: Int = 8080,
+    val udpPort: Int = 50005,
     val isDefault: Boolean = false,
     val lastConnected: Long = 0L,
     val notes: String = ""
